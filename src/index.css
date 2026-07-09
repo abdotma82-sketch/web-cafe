@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: the <html class="dark"> toggles the whole app theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Desktop breakpoint scale (in addition to Tailwind's sm/md/lg/xl/2xl).
+   Targets the professional-desktop resolutions this ERP/POS must serve:
+     xl   1280  · 2xl  1536  · 3xl  1920 (reference)  · 4xl  2560  · 5xl  3200 (4K)
+   Auto-fill/auto-fit grids below cover the in-between widths fluidly, so we
+   rarely need these explicitly — they exist for the odd bespoke override.
+   ──────────────────────────────────────────────────────────────────────── */
+@theme {
+  --breakpoint-3xl: 1920px;
+  --breakpoint-4xl: 2560px;
+  --breakpoint-5xl: 3200px;
+}
+
+/* ── Design tokens: everything sizes off these, so the whole UI scales as one ── */
+:root {
+  /* Fluid root font — the entire rem-based UI grows gently from 1366px → 4K
+     (≈15px @1366, 16px @1920 reference, 17px @2560, capped 18px on 4K). */
+  font-size: clamp(15px, 0.18vw + 12.55px, 18px);
+
+  /* Page framing */
+  --page-max: 96rem;                              /* content cap on ultra-wide screens */
+  --page-pad: clamp(1rem, 0.5rem + 1.2vw, 2.5rem);
+  --gap: clamp(0.75rem, 0.45rem + 0.6vw, 1.25rem);
+
+  /* Card grid minimums — auto-fill uses these to decide column counts */
+  --card-min: 12rem;
+
+  /* Surfaces (light) */
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;   /* slate-100 */
+  --border: #e2e8f0;      /* slate-200 */
+}
+
+.dark {
+  --surface: #131c2e;
+  --surface-2: #0f1727;
+  --border: #1e293b;      /* slate-800 */
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: "Segoe UI Variable", "Segoe UI", Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, desktop-style scrollbars */
+* { scrollbar-width: thin; scrollbar-color: #3b4a63 transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #3b4a63; border-radius: 4px; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reusable responsive utilities — one source of truth so pages stay consistent
+   and we never duplicate layout CSS.
+   ──────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Fluid page container: fills small desktops, caps + centres on large ones. */
+  .page {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding: var(--page-pad);
+  }
+  .page-wide { --page-max: 120rem; }   /* data-dense pages (inventory, reports) */
+  .page-narrow { --page-max: 72rem; }  /* focused forms/detail pages */
+
+  /* Card surface — replaces the repeated border/bg/rounded/dark string. */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+  }
+
+  /* Auto-responsive card grid: columns appear/disappear by available width,
+     so 1366 → 4K is covered without hard-coded per-breakpoint counts. */
+  .grid-cards {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--card-min)), 1fr));
+  }
+  .grid-cards-sm { --card-min: 8.5rem; }
+  .grid-cards-md { --card-min: 12rem; }
+  .grid-cards-lg { --card-min: 17rem; }
+
+  /* KPI strip: auto-fit collapses empty tracks so N cards always fill the row. */
+  .grid-kpi {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+  }
+
+  /* Panels area (charts / lists) — 1 col small, 2 on wide, 3 on ultra-wide. */
+  .grid-panels {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 1024px) { .grid-panels { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 2560px) { .grid-panels { grid-template-columns: repeat(3, 1fr); } }
+
+  /* Tables that may exceed the viewport scroll horizontally instead of breaking. */
+  .table-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+
+  /* Modal panel: always fits the viewport height, scrolls its own overflow. */
+  .modal-panel {
+    max-height: min(90vh, 48rem);
+    overflow-y: auto;
+  }
+
+  /* Responsive form grid: single column on narrow, two once there's room. */
+  .form-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+}
