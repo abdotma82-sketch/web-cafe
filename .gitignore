@@ -1,0 +1,22 @@
+# Dependencies — never commit; the host runs `npm install` (committing Windows
+# node_modules breaks Linux builds: .bin shims lose their +x bit → tsc: Permission denied).
+node_modules/
+
+# Build output — Vercel/Netlify rebuild this
+dist/
+dist-ssr/
+
+# Vite cache
+.vite/
+node_modules/.vite/
+
+# Logs & local env
+*.local
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+.idea/
+.DS_Store
+Thumbs.db
