@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, money } from "../lib/api";
+import { useState } from "react";
+import { money } from "../lib/api";
+import { qk, useApiQuery } from "../lib/queries";
 
 interface Row {
   label: string;
@@ -25,22 +26,8 @@ const RANGES = [7, 30, 90];
 /** Sales report over a selectable range — reads /api/reports/sales?days=N. */
 export default function Reports() {
   const [days, setDays] = useState(7);
-  const [data, setData] = useState<SalesReport | null>(null);
-  const [error, setError] = useState("");
-
-  const load = useCallback((d: number) => {
-    api
-      .get<SalesReport>(`/api/reports/sales?days=${d}`)
-      .then((r) => {
-        setData(r.data);
-        setError("");
-      })
-      .catch(() => setError("Could not load the report."));
-  }, []);
-
-  useEffect(() => {
-    load(days);
-  }, [days, load]);
+  const { data, isError } = useApiQuery<SalesReport>(qk.report(days), `/api/reports/sales?days=${days}`);
+  const error = isError ? "Could not load the report." : "";
 
   const maxDay = Math.max(1, ...(data?.dailySales ?? []).map((r) => r.amount));
 

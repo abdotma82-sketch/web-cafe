@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { api, money } from "../lib/api";
+import { errText, qk, useApiQuery, useInvalidate } from "../lib/queries";
 
 interface PurchaseLine {
   productName: string;
@@ -29,26 +30,12 @@ interface Product {
 /** Purchasing — supplier goods-received notes. Receiving a purchase auto-adds stock
     (needs inventory.manage). */
 export default function Purchasing() {
-  const [list, setList] = useState<Purchase[]>([]);
-  const [error, setError] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [open, setOpen] = useState<string | null>(null); // expanded purchase id
+  const invalidate = useInvalidate();
 
-  const load = useCallback(() => {
-    api
-      .get<Purchase[]>("/api/purchases")
-      .then((r) => {
-        setList(r.data);
-        setError("");
-      })
-      .catch((e) =>
-        setError(e?.response?.status === 403 ? "You don't have permission to view purchasing." : "Could not load purchases."),
-      );
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: list = [], error: qError, isError } = useApiQuery<Purchase[]>(qk.purchases, "/api/purchases");
+  const error = isError ? errText(qError, "Could not load purchases.") : "";
 
   const totalSpend = useMemo(() => list.reduce((s, p) => s + p.totalCost, 0), [list]);
 
@@ -106,7 +93,7 @@ export default function Purchasing() {
         {list.length === 0 && !error && <div className="text-sm text-slate-400">No purchases yet.</div>}
       </div>
 
-      {showNew && <NewPurchaseDialog onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); load(); }} />}
+      {showNew && <NewPurchaseDialog onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); invalidate(qk.purchases, ["inventory"], qk.products); }} />}
     </div>
   );
 }
@@ -120,7 +107,6 @@ interface Draft {
 
 /** Build a purchase: pick products, set qty × unit cost, add shipping, submit → stock rises. */
 function NewPurchaseDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const [products, setProducts] = useState<Product[]>([]);
   const [supplier, setSupplier] = useState("");
   const [invoice, setInvoice] = useState("");
   const [shipping, setShipping] = useState("");
@@ -130,9 +116,7 @@ function NewPurchaseDialog({ onClose, onDone }: { onClose: () => void; onDone: (
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    api.get<Product[]>("/api/inventory").then((r) => setProducts(r.data)).catch(() => {});
-  }, []);
+  const { data: products = [] } = useApiQuery<Product[]>(qk.inventory(false, ""), "/api/inventory");
 
   const addLine = (id: string) => {
     if (!id) return;

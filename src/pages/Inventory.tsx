@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, money } from "../lib/api";
+import { errText, qk, useApiQuery, useInvalidate } from "../lib/queries";
 
 interface Product {
   id: string;
@@ -24,35 +25,23 @@ interface Category {
 
 /** Inventory — stock levels with in-line recount / receive-waste adjustments (needs inventory.manage). */
 export default function Inventory() {
-  const [list, setList] = useState<Product[]>([]);
-  const [cats, setCats] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
-  const [error, setError] = useState("");
   const [edit, setEdit] = useState<Product | null>(null); // stock dialog target
   const [showNew, setShowNew] = useState(false);
+  const invalidate = useInvalidate();
 
-  const load = useCallback(() => {
-    const params = new URLSearchParams();
-    if (lowOnly) params.set("low", "true");
-    if (search.trim()) params.set("q", search.trim());
-    api
-      .get<Product[]>(`/api/inventory?${params}`)
-      .then((r) => {
-        setList(r.data);
-        setError("");
-      })
-      .catch((e) =>
-        setError(e?.response?.status === 403 ? "You don't have permission to manage inventory." : "Could not load inventory."),
-      );
-  }, [lowOnly, search]);
+  const params = new URLSearchParams();
+  if (lowOnly) params.set("low", "true");
+  if (search.trim()) params.set("q", search.trim());
 
-  useEffect(() => {
-    load();
-  }, [load]);
-  useEffect(() => {
-    api.get<Category[]>("/api/inventory/categories").then((r) => setCats(r.data)).catch(() => {});
-  }, []);
+  const { data: list = [], error: qError, isError } = useApiQuery<Product[]>(
+    qk.inventory(lowOnly, search.trim()),
+    `/api/inventory?${params}`,
+  );
+  const { data: cats = [] } = useApiQuery<Category[]>(qk.categories, "/api/inventory/categories");
+  const error = isError ? errText(qError, "Could not load inventory.") : "";
+  const refresh = () => invalidate(["inventory"]); // covers list + categories (prefix match)
 
   const lowCount = useMemo(() => list.filter((p) => p.low).length, [list]);
 
@@ -126,8 +115,8 @@ export default function Inventory() {
         {list.length === 0 && !error && <div className="px-4 py-6 text-sm text-slate-400">No products.</div>}
       </div>
 
-      {edit && <StockDialog product={edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); load(); }} />}
-      {showNew && <NewProductDialog cats={cats} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); load(); }} />}
+      {edit && <StockDialog product={edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); refresh(); }} />}
+      {showNew && <NewProductDialog cats={cats} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); refresh(); }} />}
     </div>
   );
 }

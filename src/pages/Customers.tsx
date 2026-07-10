@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { api, money } from "../lib/api";
+import { useMemo, useState } from "react";
+import { money } from "../lib/api";
+import { qk, useApiQuery } from "../lib/queries";
 
 interface Customer {
   id: string;
@@ -12,16 +13,9 @@ interface Customer {
 
 /** Customer directory with loyalty points and store-credit balance — reads /api/customers. */
 export default function Customers() {
-  const [all, setAll] = useState<Customer[]>([]);
   const [q, setQ] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<Customer[]>("/api/customers")
-      .then((r) => setAll(r.data))
-      .catch(() => setError("Could not load customers."));
-  }, []);
+  const { data: all = [], isError } = useApiQuery<Customer[]>(qk.customers, "/api/customers");
+  const error = isError ? "Could not load customers." : "";
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();

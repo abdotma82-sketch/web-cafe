@@ -14,6 +14,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [
       { icon: "📊", label: "Dashboard", path: "/" },
       { icon: "🛒", label: "POS", path: "/pos" },
+      { icon: "🍽️", label: "Floor Plan", path: "/floor" },
       { icon: "📦", label: "Products", path: "/products" },
       { icon: "🧾", label: "Orders", path: "/orders" },
     ],

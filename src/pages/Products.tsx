@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { api, money } from "../lib/api";
+import { useMemo, useState } from "react";
+import { money } from "../lib/api";
+import { qk, useApiQuery } from "../lib/queries";
 
 interface Product {
   id: string;
@@ -13,18 +14,10 @@ interface Product {
 
 /** Product catalogue with photos, price and live stock — reads /api/products. */
 export default function Products() {
-  const [all, setAll] = useState<Product[]>([]);
   const [q, setQ] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api
-      .get<Product[]>("/api/products")
-      .then((r) => setAll(r.data))
-      .catch(() => setError("Could not load products."))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: all = [], isError, isLoading } = useApiQuery<Product[]>(qk.products, "/api/products");
+  const error = isError ? "Could not load products." : "";
+  const loading = isLoading;
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();

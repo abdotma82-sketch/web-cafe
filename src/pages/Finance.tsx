@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api, money } from "../lib/api";
+import { money } from "../lib/api";
+import { qk, useApiQuery } from "../lib/queries";
 
 interface Expense {
   category: string;
@@ -28,15 +28,8 @@ function Stat({ icon, value, label, tone }: { icon: string; value: string; label
 
 /** Finance — this month's Profit & Loss + recent expenses (reads /api/finance/pnl). */
 export default function Finance() {
-  const [data, setData] = useState<Pnl | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<Pnl>("/api/finance/pnl")
-      .then((r) => setData(r.data))
-      .catch(() => setError("Could not load finance data."));
-  }, []);
+  const { data, isError } = useApiQuery<Pnl>(qk.finance, "/api/finance/pnl");
+  const error = isError ? "Could not load finance data." : "";
 
   return (
     <div className="page page-wide">

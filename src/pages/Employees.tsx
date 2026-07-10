@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { errText, qk, useApiQuery } from "../lib/queries";
 
 interface Employee {
   id: string;
@@ -14,26 +13,13 @@ interface Employee {
 
 /** Staff directory with role and status — reads /api/employees (needs employees.manage). */
 export default function Employees() {
-  const [list, setList] = useState<Employee[]>([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<Employee[]>("/api/employees")
-      .then((r) => setList(r.data))
-      .catch((e) =>
-        setError(
-          e?.response?.status === 403
-            ? "You don't have permission to view employees."
-            : "Could not load employees.",
-        ),
-      );
-  }, []);
+  const { data: list = [], error, isError } = useApiQuery<Employee[]>(qk.employees, "/api/employees");
+  const errorMsg = isError ? errText(error, "Could not load employees.") : "";
 
   return (
     <div className="page page-wide">
       <h1 className="mb-4 text-2xl font-bold">Employees</h1>
-      {error && <div className="mb-4 text-sm text-red-400">{error}</div>}
+      {errorMsg && <div className="mb-4 text-sm text-red-400">{errorMsg}</div>}
 
       <div className="grid-cards grid-cards-lg">
         {list.map((e) => (
@@ -56,7 +42,7 @@ export default function Employees() {
             </span>
           </div>
         ))}
-        {list.length === 0 && !error && <div className="text-sm text-slate-400">No employees.</div>}
+        {list.length === 0 && !isError && <div className="text-sm text-slate-400">No employees.</div>}
       </div>
     </div>
   );

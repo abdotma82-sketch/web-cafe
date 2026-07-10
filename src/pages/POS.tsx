@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { api, money } from "../lib/api";
+import { qk, useApiQuery, useInvalidate } from "../lib/queries";
 
 interface Product {
   id: string;
@@ -35,7 +36,6 @@ const PAY_METHODS = [
 
 /** Point of sale — pick products, build a cart, tender. Money math is done server-side. */
 export default function POS() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [orderType, setOrderType] = useState(1);
@@ -44,13 +44,9 @@ export default function POS() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const invalidate = useInvalidate();
 
-  useEffect(() => {
-    api
-      .get<Product[]>("/api/products")
-      .then((r) => setProducts(r.data))
-      .catch(() => setError("Could not load products."));
-  }, []);
+  const { data: products = [] } = useApiQuery<Product[]>(qk.products, "/api/products");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -90,8 +86,8 @@ export default function POS() {
       const r = await api.post<Receipt>("/api/pos/checkout", body);
       setReceipt(r.data);
       clear();
-      // refresh stock counts after a sale
-      api.get<Product[]>("/api/products").then((res) => setProducts(res.data)).catch(() => {});
+      // A sale changes stock, today's numbers and the orders feed — refresh all three caches.
+      invalidate(qk.products, qk.dashboard, qk.orders);
     } catch (e: unknown) {
       const err = e as { response?: { status?: number; data?: { error?: string } } };
       setError(

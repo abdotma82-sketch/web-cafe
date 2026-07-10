@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, clearSession, money } from "../lib/api";
+import { money } from "../lib/api";
+import { errText, qk, useApiQuery } from "../lib/queries";
 
 interface NamedAmount {
   name: string;
@@ -42,39 +42,15 @@ function Kpi({ icon, value, label, accent }: { icon: string; value: string; labe
   );
 }
 
-/** Live owner dashboard — refreshes every 10 s from /api/dashboard/today. */
+/** Live owner dashboard — refreshes every 10 s from /api/dashboard/today (TanStack Query). */
 export default function Dashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState("");
-
-  const load = useCallback(() => {
-    api
-      .get<DashboardData>("/api/dashboard/today")
-      .then((r) => {
-        setData(r.data);
-        setError("");
-      })
-      .catch((err: unknown) => {
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        if (status === 401 || status === 403) {
-          // Stale / expired session — bounce to login for a fresh token.
-          clearSession();
-          location.href = "/login";
-          return;
-        }
-        setError(
-          status
-            ? `Could not load the dashboard (HTTP ${status}).`
-            : "Cannot reach the till API — is the server running on port 5088?",
-        );
-      });
-  }, []);
-
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 10_000);
-    return () => clearInterval(t);
-  }, [load]);
+  // A 401 is handled globally by the axios interceptor; other failures surface below.
+  const { data, error, refetch, isError } = useApiQuery<DashboardData>(
+    qk.dashboard,
+    "/api/dashboard/today",
+    { refetchInterval: 10_000 },
+  );
+  const errorMsg = isError ? errText(error, "Cannot reach the till API — is the server running on port 5088?") : "";
 
   const hours = (data?.salesByHour ?? []).filter((h) => h.hour >= 6 && h.hour <= 22);
   const maxHour = Math.max(1, ...hours.map((h) => h.amount));
@@ -87,16 +63,16 @@ export default function Dashboard() {
           <p className="text-sm text-slate-500 dark:text-slate-400">{data?.day ?? "…"} · live, refreshes every 10 s</p>
         </div>
         <button
-          onClick={load}
+          onClick={() => refetch()}
           className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
         >
           ⟳ Refresh
         </button>
       </div>
 
-      {error && (
+      {errorMsg && (
         <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error}
+          {errorMsg}
         </div>
       )}
 

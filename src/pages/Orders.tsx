@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, money } from "../lib/api";
+import { money } from "../lib/api";
+import { qk, useApiQuery } from "../lib/queries";
 
 interface Order {
   orderNumber: number;
@@ -19,24 +19,10 @@ const STATUS_COLOR: Record<string, string> = {
 
 /** Recent orders across all statuses — reads /api/orders/recent, refreshes every 8 s. */
 export default function Orders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [error, setError] = useState("");
-
-  const load = useCallback(() => {
-    api
-      .get<Order[]>("/api/orders/recent")
-      .then((r) => {
-        setOrders(r.data);
-        setError("");
-      })
-      .catch(() => setError("Could not load orders."));
-  }, []);
-
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 8000);
-    return () => clearInterval(t);
-  }, [load]);
+  const { data: orders = [], isError } = useApiQuery<Order[]>(qk.orders, "/api/orders/recent", {
+    refetchInterval: 8000,
+  });
+  const error = isError ? "Could not load orders." : "";
 
   return (
     <div className="page page-wide">
