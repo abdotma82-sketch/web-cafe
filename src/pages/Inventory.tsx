@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, money } from "../lib/api";
+import { api, mediaUrl, money } from "../lib/api";
 import { errText, qk, useApiQuery, useInvalidate } from "../lib/queries";
 
 interface Product {
@@ -84,7 +84,7 @@ export default function Inventory() {
           <div key={p.id} className="grid grid-cols-2 items-center gap-2 border-b border-slate-100 px-4 py-3 last:border-0 dark:border-slate-800 sm:grid-cols-12">
             <div className="col-span-2 flex items-center gap-3 sm:col-span-5">
               <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-lg dark:bg-slate-800">
-                {p.image ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" /> : "☕"}
+                {p.image ? <img src={mediaUrl(p.image)} alt={p.name} className="h-full w-full object-cover" /> : "☕"}
               </div>
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold">{p.name}</div>

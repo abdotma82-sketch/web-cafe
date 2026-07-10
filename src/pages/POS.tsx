@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { api, money } from "../lib/api";
+import { api, mediaUrl, money } from "../lib/api";
 import { qk, useApiQuery, useInvalidate } from "../lib/queries";
 
 interface Product {
@@ -123,7 +123,7 @@ export default function POS() {
               className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition hover:border-blue-400 hover:shadow-md active:scale-[0.98] dark:border-slate-800 dark:bg-[#131c2e]"
             >
               <div className="grid h-20 place-items-center bg-slate-100 text-2xl dark:bg-slate-800">
-                {p.image ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" /> : "☕"}
+                {p.image ? <img src={mediaUrl(p.image)} alt={p.name} className="h-full w-full object-cover" /> : "☕"}
               </div>
               <div className="flex flex-1 flex-col p-2">
                 <span className="line-clamp-2 text-sm font-semibold">{p.name}</span>

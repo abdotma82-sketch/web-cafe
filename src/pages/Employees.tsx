@@ -1,3 +1,4 @@
+import { mediaUrl } from "../lib/api";
 import { errText, qk, useApiQuery } from "../lib/queries";
 
 interface Employee {
@@ -25,7 +26,7 @@ export default function Employees() {
         {list.map((e) => (
           <div key={e.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#131c2e]">
             <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-lg dark:bg-slate-800">
-              {e.image ? <img src={e.image} alt={e.fullName} className="h-full w-full object-cover" /> : "👤"}
+              {e.image ? <img src={mediaUrl(e.image)} alt={e.fullName} className="h-full w-full object-cover" /> : "👤"}
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{e.fullName}</div>

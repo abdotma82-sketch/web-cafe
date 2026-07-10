@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { money } from "../lib/api";
+import { mediaUrl, money } from "../lib/api";
 import { qk, useApiQuery } from "../lib/queries";
 
 interface Product {
@@ -52,7 +52,7 @@ export default function Products() {
             <div className="grid aspect-square place-items-center overflow-hidden bg-slate-100 dark:bg-[#0f1727]">
               {p.image ? (
                 <img
-                  src={p.image}
+                  src={mediaUrl(p.image)}
                   loading="lazy"
                   alt={p.name}
                   className="h-full w-full object-cover"
